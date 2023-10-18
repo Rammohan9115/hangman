@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import './Hangman.css';
 import { randomWord } from './Words.js';
+//import {getRandomLangName} from './Wordlist.js';
 import step0 from './images/0.jpg';
 import step1 from './images/1.jpg';
 import step2 from './images/2.jpg';
@@ -9,7 +10,12 @@ import step4 from './images/4.jpg';
 import step5 from './images/5.jpg';
 import step6 from './images/6.jpg';
 
+
+
 class Hangman extends Component {
+
+
+  
   static defaultProps = {
     maxWrong: 6,
     images: [step0, step1, step2, step3, step4, step5, step6],
@@ -23,8 +29,28 @@ class Hangman extends Component {
       answer: randomWord(),
       emoji: "😃",
       score: 100,
+      timer: 60, // Initialize the timer to 60 seconds
+      
     };
+    this.startTimer();
+
   }
+  startTimer() {
+    this.timerID = setInterval(() => {
+      if (this.state.timer > 0) {
+        this.setState((prevState) => ({ timer: prevState.timer - 1 }));
+      } else {
+        clearInterval(this.timerID);
+        // You can add code here to handle what happens when the timer reaches 0.
+        // For example, ending the game.
+      }
+    }, 1000);
+    
+  }
+  stopTimer() {
+    clearInterval(this.timerID);
+  }
+  
 
   handleGuess = (e) => {
     let letter = e.target.value;
@@ -45,6 +71,9 @@ class Hangman extends Component {
       score: newScore,
     }));
   }
+
+  
+  
 
     guessedWord(){
         return this.state.answer.split("").map(letter => (this.state.guessed.has(letter) ? letter : " _ " ));
@@ -86,21 +115,29 @@ class Hangman extends Component {
         this.setState({
             mistake:0,
             guessed:new Set([]),
-            answer: randomWord()
+            answer: randomWord(),
+            timer: 60,
+            score:0,
         })
+        this.startTimer();
     }
 
     render() {
-        const gameOver = this.state.mistake >= this.props.maxWrong; 
+        const gameOver = this.state.mistake >= this.props.maxWrong || this.state.timer === 0; 
         let gameStat = this.generateButtons();
         const isWinner = this.guessedWord().join("") === this.state.answer;
-        console.log(this.state.score );
+       
         
         if (isWinner) {
           gameStat = "You Won!!";
+          this.stopTimer();
         }
         if (gameOver) {
           gameStat = "You Lost!!";
+          this.setState({
+            
+            score:0
+        })
         }
 
         return (
@@ -108,7 +145,7 @@ class Hangman extends Component {
                <h1 className='text-center'>HANGMAN {this.state.emoji}</h1>
                <div className='float-right'>Wrong Guesses: {this.state.mistake} of {this.props.maxWrong} </div>
                <div className='text-center '>
-                <img src={this.props.images[this.state.mistake]} alt="" />
+                <img src={!gameOver ? this.props.images[this.state.mistake] :this.props.images[6] } alt="" />
                </div>
                <div className='text-center '>
                 <p className=''>Guess the Programming Languages:</p>
@@ -119,6 +156,9 @@ class Hangman extends Component {
                 {isWinner || gameOver ? (
             <p className=''>Score: {this.state.score}</p>
           ) : null}
+          <div className="text-center">
+  <p>Time Remaining: {this.state.timer} seconds</p>
+</div>
                 <button className="btn btn-info" onClick={this.resetButton} >Reset</button>
                </div>
      
